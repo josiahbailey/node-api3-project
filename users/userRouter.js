@@ -1,47 +1,83 @@
 const express = require('express');
+const validateUserId = require('../middleware/validateUserId-middleware')
+const validateUser = require('../middleware/validateUser-middleware')
+const validatePost = require('../middleware/validatePost-middleware')
 
 const router = express.Router();
 
-router.post('/', (req, res) => {
-  // do your magic!
+const Users = require('./userDb')
+const Posts = require('./postDb')
+
+router.post('/', validateUser, (req, res) => {
+  const newUser = req.body
+  Users.insert(newUser)
+    .then(id => {
+      res.status(201).json(id)
+    })
+    .catch(err => {
+      res.status(404).json({ message: 'Error adding new user' })
+    })
 });
 
-router.post('/:id/posts', (req, res) => {
-  // do your magic!
+router.post('/:id/posts', validateUserId, validatePost, (req, res) => {
+  const newPost = req.body
+  Posts.insert(newPost)
+    .then(id => {
+      res.status(201).json(id)
+    })
+    .catch(err => {
+      console.log(err)
+      res.status(404).json({ message: 'Error adding new post' })
+    })
 });
 
 router.get('/', (req, res) => {
-  // do your magic!
+  Users.get()
+    .then(users => {
+      res.status(200).json(users)
+    })
+    .catch(err => {
+      res.status(500).json({ message: 'Unable to get users' })
+    })
 });
 
-router.get('/:id', (req, res) => {
-  // do your magic!
+router.get('/:id', validateUserId, (req, res) => {
+  const user = req.user
+  res.status(200).json(user)
 });
 
-router.get('/:id/posts', (req, res) => {
-  // do your magic!
+router.get('/:id/posts', validateUserId, (req, res) => {
+  const id = req.params.id
+  Users.getUserPosts(id)
+    .then(posts => {
+      res.status(200).json(posts)
+    })
+    .catch(err => {
+      res.status(500).json({ message: `Unable to get user by id of ${id} posts` })
+    })
 });
 
-router.delete('/:id', (req, res) => {
-  // do your magic!
+router.delete('/:id', validateUserId, (req, res) => {
+  const id = req.params.id
+  Users.remove(id)
+    .then(x => {
+      res.status(204).json({ message: `User ${id} successfully deleted` })
+    })
+    .catch(err => {
+      res.status(500).json({ message: `Unable to delete user of id ${id}` })
+    })
 });
 
-router.put('/:id', (req, res) => {
-  // do your magic!
+router.put('/:id', validateUserId, validateUser, (req, res) => {
+  const id = req.params.id
+  Users.update(id)
+    .then(x => {
+      res.status(203).json({ message: `User ${id} successfully updated`, data: x })
+    })
+    .catch(err => {
+      console.log(err)
+      res.status(500).json({ message: `Unable to update user of id ${id}` })
+    })
 });
-
-//custom middleware
-
-function validateUserId(req, res, next) {
-  // do your magic!
-}
-
-function validateUser(req, res, next) {
-  // do your magic!
-}
-
-function validatePost(req, res, next) {
-  // do your magic!
-}
 
 module.exports = router;
